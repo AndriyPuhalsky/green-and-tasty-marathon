@@ -555,12 +555,16 @@ Response: `200 OK`
 ```
 
 ### `GET` /reservations/{reservationId}/guest-session-id
+Returns the owner's own guest session in the group of this reservation. The session is created on the first call if it does not exist yet. Only the reservation owner can call it.
+
 Response: `200 OK`
 ```json
 {
   "guestSessionId": "string"
 }
 ```
+
+Errors: `401` no user in token, `403` caller is not the reservation owner, `404` reservation or group reservation not found, `400` group reservation is already submitted or closed (only when the owner session has to be created).
 
 
 ### `DELETE` /reservations
@@ -1180,30 +1184,78 @@ Response: 200 OK
 ```
 
 ### `POST` /group-reservations/{groupReservationId}/submit
-Response: 200 OK
+Submits the consolidated group pre-order. Only the reservation owner can call it.
+
+Dishes are taken only from submitted guest sessions, the same dishes are merged by `dishId` and added to the reservation's order (if the order already has the dish, the quantities are summed and the item goes back to `Pending`). The order status becomes `SubmittedByCustomer` and the group reservation status becomes `Submitted`. The response contains the merged guest dishes.
+
+Request body:
 ```json
 {
-  "message": "Group reservation pre-order submitted successfully."
+  "reservationId": "string"
 }
 ```
-
-### `GET` /guest/groups/{groupReservationId}/sessions
-Response: 200 OK
+Response: `200 OK`
 ```json
 [
   {
-    "id": "string",
-    "groupReservationId": "string",
-    "guestName": "string",
-    "status": "string"
+    "dishId": "string",
+    "quantity": 3
   }
 ]
 ```
 
-### `DELETE` /guest/groups/{groupReservationId}/sessions/{guestSessionId}
-Response: 200 OK
+Errors: `401` no user in token, `403` caller is not the reservation owner, `404` reservation or group reservation not found, `400` no submitted guest sessions, submitted sessions have no dishes, order not found, group belongs to another reservation, group reservation already submitted or closed.
+
+### `GET` /guest/groups/{groupReservationId}/sessions
+Returns all participants of the group pre-order with their dishes and totals. The owner session (if it exists) goes first with type `Owner`. Only the reservation owner can call it.
+
+Response: `200 OK`
 ```json
 {
-  "message": "Guest session removed from group successfully."
+  "participants": [
+    {
+      "id": "string",
+      "type": "Guest",
+      "name": "string",
+      "items": [
+        {
+          "dish": {
+            "id": "string",
+            "name": "string",
+            "description": "string",
+            "dishType": "string",
+            "price": 180,
+            "weight": "string",
+            "calories": "string",
+            "proteins": "string",
+            "fats": "string",
+            "carbohydrates": "string",
+            "vitamins": "string",
+            "imageUrl": "string",
+            "state": "string"
+          },
+          "quantity": 2
+        }
+      ],
+      "total": 360,
+      "isSubmitted": true
+    }
+  ],
+  "total": 360
 }
 ```
+
+Errors: `401` no user in token, `403` caller is not the reservation owner, `404` group reservation or reservation not found.
+
+### `DELETE` /guest/groups/{groupReservationId}/sessions/{guestSessionId}
+Removes a guest session from the group and returns the updated group snapshot. Only the reservation owner can call it. The owner session cannot be removed.
+
+Response: `200 OK` (same body as `GET` /guest/groups/{groupReservationId}/sessions)
+```json
+{
+  "participants": [],
+  "total": 0
+}
+```
+
+Errors: `401` no user in token, `403` caller is not the reservation owner, `404` group reservation or guest session not found, `400` guest session belongs to another group, owner session, group reservation already submitted or closed.

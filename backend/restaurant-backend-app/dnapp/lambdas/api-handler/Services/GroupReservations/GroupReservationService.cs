@@ -1,15 +1,19 @@
 using APIHandler.Constants;
+using APIHandler.Constants.Orders;
 using APIHandler.Entities;
 using APIHandler.Exceptions;
 using APIHandler.Models.GroupReservation;
 using APIHandler.Models.GuestReservation;
 using APIHandler.Repositories.GroupReservations;
 using APIHandler.Repositories.GuestSessions;
+using APIHandler.Repositories.Orders;
 using APIHandler.Repositories.Reservations;
 using APIHandler.Repositories.Tables;
 using APIHandler.Services.Auth;
 using APIHandler.Services.Locations;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace APIHandler.Services.GroupReservations;
@@ -20,7 +24,8 @@ public class GroupReservationService(
     IReservationRepository reservationRepository,
     IGuestSessionRepository guestSessionRepository,
     IUserService userService,
-    ILocationService locationService) : IGroupReservationService
+    ILocationService locationService,
+    IOrderRepository orderRepository) : IGroupReservationService
 {
     private const string DefaultRestaurantName = "Green & Tasty";
 
@@ -141,6 +146,77 @@ public class GroupReservationService(
             throw new GroupReservationExpiredException();
 
         return new GetGroupInviteTokenResponse(groupReservation.ReservationToken);
+    }
+
+    public async Task<IEnumerable<GroupPreOrderItemResponse>> SubmitGroupPreOrderAsync(string userId, string groupReservationId, string reservationId)
+    {
+        Reservation reservation = await reservationRepository.GetReservationByIdAsync(reservationId)
+            ?? throw new ReservationNotFoundException($"Reservation {reservationId} was not found.");
+
+        GroupReservation groupReservation = await groupReservationRepository.GetGroupReservationByIdAsync(groupReservationId)
+            ?? throw new GroupReservationNotFoundException();
+
+        if (reservation.CustomerId != userId)
+            throw new ActionForbiddenException("Only the reservation owner can submit the group pre-order.");
+
+        if (groupReservation.ReservationId != reservation.Id)
+            throw new ValidationException("Group reservation does not belong to this reservation.");
+
+        if (groupReservation.Status == GroupReservationStatus.Submitted)
+            throw new GroupReservationSubmittedException();
+
+        if (groupReservation.Status == GroupReservationStatus.Closed)
+            throw new GroupReservationExpiredException();
+
+        var sessions = await guestSessionRepository.GetAllByGroupReservationIdAsync(groupReservationId);
+        var submittedSessions = sessions.Where(s => s.IsSubmitted).ToList();
+
+        if (submittedSessions.Count == 0)
+            throw new GuestSessionsNotSubmittedException();
+
+        List<GroupPreOrderItemResponse> groupDishes = submittedSessions
+            .SelectMany(s => s.Dishes)
+            .GroupBy(d => d.DishId)
+            .Select(g => new GroupPreOrderItemResponse(g.Key, g.Sum(d => d.Quantity)))
+            .ToList();
+
+        if (groupDishes.Count == 0)
+            throw new CartIsEmptyException("Submitted guest sessions do not contain any dishes.");
+
+        Order order = await orderRepository.GetOrderByReservationIdAsync(reservationId)
+            ?? throw new OrderNotFoundException($"Pre-order for reservation '{reservationId}' was not found.");
+
+        AddDishesToOrder(order, groupDishes);
+        order.Status = OrderStatus.SubmittedByCustomer;
+        await orderRepository.SaveOrderAsync(order);
+
+        groupReservation.Status = GroupReservationStatus.Submitted;
+        await groupReservationRepository.SaveGroupReservationAsync(groupReservation);
+
+        return groupDishes;
+    }
+
+    private static void AddDishesToOrder(Order order, IEnumerable<GroupPreOrderItemResponse> dishes)
+    {
+        foreach (var dish in dishes)
+        {
+            var existingDish = order.Dishes.FirstOrDefault(d => d.DishId == dish.DishId);
+
+            if (existingDish != null)
+            {
+                existingDish.Quantity += dish.Quantity;
+                existingDish.State = OrderItemState.Pending;
+            }
+            else
+            {
+                order.Dishes.Add(new OrderItem
+                {
+                    DishId = dish.DishId,
+                    Quantity = dish.Quantity,
+                    State = OrderItemState.Pending
+                });
+            }
+        }
     }
 }
 
