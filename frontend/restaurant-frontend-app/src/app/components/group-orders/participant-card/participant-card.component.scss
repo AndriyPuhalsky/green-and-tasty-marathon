@@ -1,0 +1,139 @@
+@use 'app/shared/styles/abstracts/colors' as color;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: color.$neutral-0;
+  border-radius: 8px;
+}
+
+.card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding-bottom: 8px;
+}
+
+.title {
+  font-size: 18px;
+  line-height: 32px;
+}
+
+.remove {
+  margin-left: auto;
+  padding: 0 4px;
+  font-size: 16px;
+}
+
+.chip {
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  border-radius: 6px;
+
+  &.submitted {
+    color: color.$green-800;
+    background: color.$green-100;
+  }
+
+  &.pending {
+    color: color.$neutral-700;
+    background: color.$orange-100;
+  }
+}
+
+.items {
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto 72px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 20px;
+
+  & + & {
+    border-top: 1px solid rgba(color.$neutral-200, 0.5);
+  }
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: color.$green-600;
+  background: color.$green-100;
+}
+
+.name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.qty {
+  color: color.$neutral-600;
+  white-space: nowrap;
+}
+
+.price {
+  font-weight: 500;
+  text-align: right;
+}
+
+.empty {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: color.$neutral-600;
+}
+
+.subtotal {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+  padding: 16px 12px 4px;
+  font-size: 16px;
+  font-weight: 500;
+  border-top: 1px solid color.$neutral-200;
+
+  span:first-child {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .item {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 8px 0;
+  }
+
+  .avatar {
+    grid-row: span 2;
+    width: 40px;
+    height: 40px;
+  }
+
+  .price {
+    grid-column: 2 / -1;
+    text-align: left;
+  }
+
+  .subtotal {
+    padding: 16px 0 0;
+  }
+}

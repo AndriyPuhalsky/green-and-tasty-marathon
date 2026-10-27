@@ -1,0 +1,263 @@
+@use 'app/shared/styles/abstracts/colors' as color;
+
+.page {
+  box-sizing: border-box;
+  max-width: 864px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 40px;
+  background: color.$neutral-100;
+  border-radius: 24px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid color.$bg-green;
+}
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.title {
+  font-size: 26px;
+  line-height: 40px;
+}
+
+.badge {
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 16px;
+  border-radius: 6px;
+  background: color.$neutral-200;
+
+  &.sent {
+    background: color.$orange-100;
+  }
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 14px;
+  line-height: 24px;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 16px;
+  font-size: 14px;
+  text-align: center;
+
+  p {
+    color: color.$neutral-600;
+  }
+
+  .state-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: color.$neutral-900;
+  }
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid color.$green-150;
+  border-top-color: color.$green-600;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sync {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-top: -8px;
+}
+
+.sync-text {
+  font-size: 12px;
+  line-height: 20px;
+  color: color.$neutral-600;
+
+  &.failed {
+    color: color.$red-400;
+  }
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 20px;
+  background: color.$orange-30;
+  border: 1px solid color.$orange-100;
+  border-radius: 8px;
+}
+
+.participants {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  list-style: none;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: color.$neutral-0;
+  border-radius: 8px;
+
+  &.empty {
+    align-items: center;
+    gap: 8px;
+    padding: 24px 16px;
+    font-size: 14px;
+    text-align: center;
+
+    p {
+      color: color.$neutral-600;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+  }
+}
+
+.block-title {
+  font-size: 18px;
+  line-height: 32px;
+}
+
+.hint {
+  font-size: 12px;
+  line-height: 20px;
+  color: color.$neutral-600;
+}
+
+.order {
+  margin-top: 8px;
+  list-style: none;
+}
+
+.order-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 20px;
+
+  & + & {
+    border-top: 1px solid rgba(color.$neutral-200, 0.5);
+  }
+
+  .price {
+    font-weight: 500;
+    white-space: nowrap;
+  }
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 16px;
+  border-top: 2px solid color.$bg-green;
+}
+
+.grand-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 40px;
+
+  .amount {
+    font-weight: 600;
+    color: color.$green-600;
+  }
+}
+
+.dialog-text {
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 16px;
+  width: 100%;
+}
+
+.danger {
+  color: color.$red-400;
+  background: color.$neutral-0;
+  border-color: color.$red-400;
+
+  &:hover:not(:disabled) {
+    background: color.$red-30;
+  }
+
+  &:disabled {
+    color: color.$neutral-400;
+    border-color: color.$neutral-200;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 16px 8px 40px;
+  }
+
+  .panel {
+    gap: 16px;
+    padding: 24px 12px;
+    border-radius: 16px;
+  }
+
+  .grand-total {
+    font-size: 20px;
+  }
+}
