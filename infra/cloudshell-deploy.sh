@@ -3,6 +3,7 @@
 # Порядок як у README: Terraform -> backend (Syndicate) -> frontend (S3 + CloudFront).
 # Потрібен Python 3.10+ (у CloudShell зараз 3.13); Terraform, .NET 10 і Node 24 ставляться в /tmp/tools.
 # Запуск: bash infra/cloudshell-deploy.sh [tools|config|state|infra|backend|frontend|info|all]
+# Оновити вже розгорнутий бекенд з іншої гілки: BRANCH=hw5-backend bash infra/cloudshell-deploy.sh update
 # Код береться з репозиторію (BRANCH=main за замовчуванням, можна BRANCH=hw5-backend).
 set -euo pipefail
 
@@ -111,6 +112,20 @@ step_backend() {
   deactivate
 }
 
+step_update() {
+  log "backend update ($BRANCH)"
+  cd "$WORK"
+  git fetch -q --depth 1 origin "$BRANCH"
+  git checkout -q -B "$BRANCH" FETCH_HEAD
+  cd "$BE_DIR"
+  # shellcheck disable=SC1091
+  source syndicate_venv/bin/activate
+  export SDCT_CONF="$BE_DIR/.syndicate-config-restaurant-backend-app"
+  syndicate build
+  syndicate update --deploy-name dev --replace-output
+  deactivate
+}
+
 backend_url() {
   local api_id
   api_id=$(aws apigateway get-rest-apis --region $REGION --query "items[?name=='restaurant-backend-api'].id | [0]" --output text)
@@ -143,6 +158,7 @@ case "${1:-all}" in
   state) step_state ;;
   infra) step_infra ;;
   backend) step_backend ;;
+  update) step_update ;;
   frontend) step_frontend ;;
   info) step_info ;;
   all) step_tools; step_config; step_state; step_infra; step_backend; step_frontend; step_info ;;
