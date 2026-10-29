@@ -1,0 +1,10 @@
+{
+  "allure": {
+    "directory": "../../../TestResults/allure-results",
+    "title": "Green & Tasty: group pre-order",
+    "failExceptions": [
+      "TUnit.Assertions.Exceptions.AssertionException",
+      "Microsoft.Playwright.PlaywrightException"
+    ]
+  }
+}
