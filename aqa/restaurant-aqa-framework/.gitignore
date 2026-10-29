@@ -1,0 +1,6 @@
+bin/
+obj/
+TestResults/
+allure-report/
+*.feature.cs
+.env
