@@ -2,6 +2,7 @@ using Microsoft.Playwright;
 using RestaurantAqa.Api;
 using RestaurantAqa.Screenplay.Abilities;
 using RestaurantAqa.Screenplay.Core;
+using RestaurantAqa.Support;
 using RestaurantAqa.Ui.Pages;
 using static Microsoft.Playwright.Assertions;
 
@@ -85,7 +86,8 @@ public sealed class SubmitPreOrderInTheApp(bool confirm) : ITask
         if (confirm)
         {
             await groupPage.SubmitDialog.GetByRole(AriaRole.Button, new() { Name = "Submit", Exact = true }).ClickAsync();
-            await Expect(groupPage.SubmitDialog).ToBeHiddenAsync();
+            // діалог закривається, коли сервер відповів
+            await Expect(groupPage.SubmitDialog).ToBeHiddenAsync(new() { Timeout = TestSettings.Current.UiTimeoutMs });
         }
     }
 }
@@ -105,7 +107,7 @@ public sealed class RemoveGuestInTheApp(string guestName, bool confirm) : ITask
 
         string button = confirm ? "Remove Guest" : "Cancel";
         await groupPage.RemoveDialog.GetByRole(AriaRole.Button, new() { Name = button, Exact = true }).ClickAsync();
-        await Expect(groupPage.RemoveDialog).ToBeHiddenAsync();
+        await Expect(groupPage.RemoveDialog).ToBeHiddenAsync(new() { Timeout = TestSettings.Current.UiTimeoutMs });
     }
 }
 

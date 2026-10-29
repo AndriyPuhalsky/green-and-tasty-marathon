@@ -27,10 +27,11 @@ public sealed class GroupOrderPage(IPage page)
 
     public async Task Open(string reservationId) => await page.GotoAsync($"/reservations/{reservationId}/group-order");
 
+    // сторінка робить кілька запитів підряд, тож чекаємо довше за таймаут одного запиту
     public async Task WaitUntilLoaded()
     {
         await Heading.WaitForAsync();
-        await Loading.WaitForAsync(new() { State = WaitForSelectorState.Detached });
+        await Loading.WaitForAsync(new() { State = WaitForSelectorState.Detached, Timeout = 60_000 });
     }
 
     public ParticipantCard Card(string title)

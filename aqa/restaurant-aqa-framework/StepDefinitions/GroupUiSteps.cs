@@ -185,7 +185,7 @@ public sealed class GroupUiSteps(GroupOrderWorld world)
     {
         var screen = await Screen();
         await screen.SubmitDialog.GetByRole(AriaRole.Button, new() { Name = "Submit", Exact = true }).ClickAsync();
-        await Expect(screen.SubmitDialog).ToBeHiddenAsync();
+        await Expect(screen.SubmitDialog).ToBeHiddenAsync(new() { Timeout = TestSettings.Current.UiTimeoutMs });
     }
 
     [Given("the owner has submitted the group pre-order in the app")]
