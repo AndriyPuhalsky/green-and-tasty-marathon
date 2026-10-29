@@ -58,8 +58,8 @@ public sealed class TestSettings
             ExpectTimeoutMs = float.Parse(Get("EXPECT_TIMEOUT_MS", "10000")),
             Trace = ParseMode(Get("TRACE", "retain-on-failure")),
             Video = ParseMode(Get("VIDEO", "off")),
-            UiMaxSessions = int.Parse(Get("UI_MAX_SESSIONS", "3")),
-            Parallelism = int.Parse(Get("TEST_PARALLELISM", "4")),
+            UiMaxSessions = int.Parse(Get("UI_MAX_SESSIONS", "2")),
+            Parallelism = int.Parse(Get("TEST_PARALLELISM", "3")),
         };
     }
 

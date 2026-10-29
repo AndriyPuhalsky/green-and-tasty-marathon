@@ -49,6 +49,7 @@ public sealed class Stand
     public static async Task Prepare()
     {
         var api = CallTheApi.OfTheStand().As("stand");
+        await WarmUp();
 
         var location = await CreateLocation(api, $"AQA {UniqueData.RunId}, 1 Test Street");
         var waiterDesk = await CreateLocation(api, $"AQA {UniqueData.RunId}, 2 Waiter Street");
@@ -79,6 +80,21 @@ public sealed class Stand
         var deskWaiter = await CreateWaiter("Wanda", waiterDesk.Id);
 
         _current = new Stand(location, waiterDesk, dishes, waiter, deskWaiter);
+    }
+
+    /// <summary>
+    /// Lambda на стенді має 128 MB пам'яті, і холодний старт .NET під навантаженням буває довшим
+    /// за 29 с ліміту API Gateway (тоді 504). Тому перед тестами піднімаємо кілька екземплярів
+    /// паралельними легкими запитами: далі сценарії працюють уже з теплими.
+    /// </summary>
+    private static async Task WarmUp()
+    {
+        int instances = Math.Min(TestSettings.Current.Parallelism * 3, 9);
+        for (int round = 0; round < 2; round++)
+        {
+            await Task.WhenAll(Enumerable.Range(0, instances)
+                .Select(_ => CallTheApi.OfTheStand().As("warm-up").Get("/locations")));
+        }
     }
 
     private static async Task<LocationResponse> CreateLocation(CallTheApi api, string address)

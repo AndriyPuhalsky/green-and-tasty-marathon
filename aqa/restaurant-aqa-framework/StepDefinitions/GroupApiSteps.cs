@@ -29,6 +29,14 @@ public sealed class GroupApiSteps(GroupOrderWorld world)
     public async Task ThenParticipantsAre(DataTable expected)
     {
         var snapshot = await CurrentSnapshot();
+        await Eventually(async () =>
+        {
+            await AssertParticipants(snapshot, expected);
+        }, async () => snapshot = await world.Owner.AsksFor(TheGroupSnapshot.Of(world.GroupId)));
+    }
+
+    private async Task AssertParticipants(GroupSnapshot snapshot, DataTable expected)
+    {
         string ownerName = world.Owner.AbilityTo<HaveAnAccount>().FirstName;
 
         var expectedRows = expected.Rows.Select(r => Row(
@@ -44,7 +52,7 @@ public sealed class GroupApiSteps(GroupOrderWorld world)
     }
 
     [Then("the group total is {decimal} and equals the sum of the participant totals")]
-    public async Task ThenGroupTotalIs(decimal total)
+    public async Task ThenGroupTotalIs(decimal total) => await Eventually(async () =>
     {
         var snapshot = await world.Owner.AsksFor(TheGroupSnapshot.Of(world.GroupId));
         await Assert.That(snapshot.Total).IsEqualTo(total);
@@ -53,16 +61,16 @@ public sealed class GroupApiSteps(GroupOrderWorld world)
         {
             await Assert.That(participant.Items.Sum(i => i.Dish.Price * i.Quantity)).IsEqualTo(participant.Total);
         }
-    }
+    });
 
     [Then("the owner sees that {word} has a total of {decimal}")]
-    public async Task ThenParticipantHasTotal(string name, decimal total)
+    public async Task ThenParticipantHasTotal(string name, decimal total) => await Eventually(async () =>
     {
         var snapshot = await world.Owner.AsksFor(TheGroupSnapshot.Of(world.GroupId));
         var participant = snapshot.Participants.SingleOrDefault(p => p.Name == name);
         await Assert.That(participant).IsNotNull();
         await Assert.That(participant!.Total).IsEqualTo(total);
-    }
+    });
 
     [Then("the group has no participants and the total is 0")]
     public async Task ThenGroupIsEmpty()
@@ -76,16 +84,19 @@ public sealed class GroupApiSteps(GroupOrderWorld world)
     public async Task ThenOtherGroupParticipants(string names)
     {
         var other = await world.ActorCalled(GroupOrderWorld.OtherOwnerRole);
-        var snapshot = await other.AsksFor(TheGroupSnapshot.Of(other.Recall<string>(Remembered.GroupId)));
-        await Assert.That(string.Join(", ", snapshot.Participants.Select(p => p.Name).Order())).IsEqualTo(names);
+        await Eventually(async () =>
+        {
+            var snapshot = await other.AsksFor(TheGroupSnapshot.Of(other.Recall<string>(Remembered.GroupId)));
+            await Assert.That(string.Join(", ", snapshot.Participants.Select(p => p.Name).Order())).IsEqualTo(names);
+        });
     }
 
     [Then("guest {word} is still in the group")]
-    public async Task ThenGuestIsStillInGroup(string name)
+    public async Task ThenGuestIsStillInGroup(string name) => await Eventually(async () =>
     {
         var snapshot = await world.Owner.AsksFor(TheGroupSnapshot.Of(world.GroupId));
         await Assert.That(snapshot.Participants.Any(p => p.Name == name)).IsTrue();
-    }
+    });
 
     // ---------- Рівень 2: власна сесія Owner і submit ----------
 
@@ -219,6 +230,31 @@ public sealed class GroupApiSteps(GroupOrderWorld world)
 
     [Then("the error code is {string}")]
     public async Task ThenErrorCodeIs(string code) => await Assert.That(world.LastResponse!.ErrorCode).IsEqualTo(code);
+
+    /// <summary>
+    /// Список учасників бекенд читає з GSI DynamoDB, а він оновлюється з невеликою затримкою.
+    /// Перевірки стану через GET тому повторюються кілька секунд, як auto-wait у Playwright.
+    /// Відповідь самого DELETE перевіряється без повторів: її бекенд зобов'язаний віддати вже оновленою.
+    /// </summary>
+    private static async Task Eventually(Func<Task> assertion, Func<Task>? refresh = null)
+    {
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                await assertion();
+                return;
+            }
+            catch (TUnit.Assertions.Exceptions.AssertionException) when (attempt < 6)
+            {
+                await Task.Delay(1000);
+                if (refresh is not null)
+                {
+                    await refresh();
+                }
+            }
+        }
+    }
 
     private async Task Send(Actor actor, ITask task)
     {

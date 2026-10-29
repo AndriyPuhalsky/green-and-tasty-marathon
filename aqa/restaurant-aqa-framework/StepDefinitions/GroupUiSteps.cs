@@ -14,8 +14,9 @@ public sealed class GroupUiSteps(GroupOrderWorld world)
 {
     private const string MissingId = "00000000-0000-0000-0000-000000000000";
 
-    // Під час першого відкриття картка "My Pre-Order" може з'явитися лише після фонового
-    // оновлення (раз на 15 с), див. "Знайдені дефекти" в README. Тому картки чекаємо довше.
+    // Список учасників бекенд читає з GSI, тож одразу після змін він буває застарілим, а картка
+    // "My Pre-Order" при першому відкритті може з'явитися лише після фонового оновлення (раз на 15 с).
+    // Обидва випадки описані в README ("Знайдені дефекти"), тому картки чекаємо довше за одне оновлення.
     private static readonly LocatorAssertionsToHaveCountOptions CardsCount = new() { Timeout = 25_000 };
     private static readonly LocatorAssertionsToBeVisibleOptions CardVisible = new() { Timeout = 25_000 };
 
@@ -103,7 +104,8 @@ public sealed class GroupUiSteps(GroupOrderWorld world)
 
     [Given("the grand total shown is {string}")]
     [Then("the grand total shown is {string}")]
-    public async Task ThenGrandTotalIs(string amount) => await Expect((await Screen()).GrandTotal).ToHaveTextAsync(amount);
+    public async Task ThenGrandTotalIs(string amount)
+        => await Expect((await Screen()).GrandTotal).ToHaveTextAsync(amount, new() { Timeout = 25_000 });
 
     [Then("the page warns that some participants haven't submitted their cart yet")]
     public async Task ThenPendingNoticeShown() => await Expect((await Screen()).PendingNotice).ToBeVisibleAsync();
@@ -129,7 +131,7 @@ public sealed class GroupUiSteps(GroupOrderWorld world)
     {
         var screen = await Screen();
         await Expect(screen.Card(title).Root).ToBeVisibleAsync(CardVisible);
-        await Expect(screen.ParticipantCards).ToHaveCountAsync(1);
+        await Expect(screen.ParticipantCards).ToHaveCountAsync(1, CardsCount);
     }
 
     [Then("the owner sees the cards of {string}")]
@@ -143,7 +145,7 @@ public sealed class GroupUiSteps(GroupOrderWorld world)
     }
 
     [Then("the card {string} is not shown")]
-    public async Task ThenCardNotShown(string title) => await Expect((await Screen()).Card(title).Root).ToHaveCountAsync(0);
+    public async Task ThenCardNotShown(string title) => await Expect((await Screen()).Card(title).Root).ToHaveCountAsync(0, CardsCount);
 
     [Then("the {string} button is disabled")]
     public async Task ThenButtonDisabled(string name)

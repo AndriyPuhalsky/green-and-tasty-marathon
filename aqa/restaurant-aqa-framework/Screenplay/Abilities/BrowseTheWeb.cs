@@ -122,6 +122,8 @@ public sealed class BrowseTheWeb : IDisposableAbility
                 {
                     File.Delete(recorded);
                 }
+                DeleteIfEmpty(Path.GetDirectoryName(recorded));
+                DeleteIfEmpty(_artifactsDir);
             }
         }
         finally
@@ -149,6 +151,14 @@ public sealed class BrowseTheWeb : IDisposableAbility
         {
             _holdsSession = false;
             BrowserHost.Sessions.Release();
+        }
+    }
+
+    private static void DeleteIfEmpty(string? directory)
+    {
+        if (directory is not null && Directory.Exists(directory) && !Directory.EnumerateFileSystemEntries(directory).Any())
+        {
+            Directory.Delete(directory);
         }
     }
 

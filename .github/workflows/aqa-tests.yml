@@ -40,8 +40,8 @@ jobs:
       HEADLESS: 'true'
       TRACE: retain-on-failure
       VIDEO: retain-on-failure
-      TEST_PARALLELISM: '4'
-      UI_MAX_SESSIONS: '3'
+      TEST_PARALLELISM: '3'
+      UI_MAX_SESSIONS: '2'
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
       DOTNET_NOLOGO: '1'
       TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
